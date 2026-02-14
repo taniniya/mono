@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Game - 迷路ゲーム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Title Screen -->
+        <div id="titleScreen" class="screen active">
+            <div class="screen-content">
+                <h1 class="game-title">MONO MAZE</h1>
+                <h5 class="game-subtitle">Escape the Infinite Maze</h5>
+                <nav class="menu">
+                                    <!-- キャラクター選択（設定画面用）ここから -->
+                                    <div class="settings-group">
+                                        <label class="settings-label">
+                                            <span class="menu-label-en">Character</span>
+                                            <span class="menu-label-ja">キャラクター</span>
+                                        </label>
+                                        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;">
+                                            <span id="characterPreview" style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;font-size:48px;"></span>
+                                            <select id="settingsCharacterSelect" class="settings-select" style="width:160px;text-align:center;">
+                                                <option value="0">キャラ1</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <!-- キャラクター選択（設定画面用）ここまで -->
+                    <button id="startBtn" class="menu-button">
+                        <span class="menu-label-en">START</span>
+                        <span class="menu-label-ja">スタート</span>
+                    </button>
+                    <button id="settingsBtn" class="menu-button">
+                        <span class="menu-label-en">SETTINGS</span>
+                        <span class="menu-label-ja">設定</span>
+                    </button>
+                    <button id="aboutBtn" class="menu-button">
+                        <span class="menu-label-en">ABOUT</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="screen-header">
+                <h2 class="screen-title">
+                    <span class="menu-label-en">GAME</span>
+                    <span class="menu-label-ja">ゲーム</span>
+                </h2>
+                <button id="pauseBtn" class="control-button">
+                    <span class="menu-label-en">PAUSE</span>
+                    <span class="menu-label-ja">一時停止</span>
+                </button>
+            </div>
+            <div id="gameContainer" class="game-container">
+                <canvas id="mazeCanvas" class="maze-canvas"></canvas>
+                <!-- Mobile Touch Controls -->
+                <div class="touch-controls" id="touchControls">
+                    <button class="touch-btn up" id="btnUp">▲</button>
+                    <div class="touch-middle">
+                        <button class="touch-btn left" id="btnLeft">◄</button>
+                        <button class="touch-btn down" id="btnDown">▼</button>
+                        <button class="touch-btn right" id="btnRight">►</button>
+                    </div>
+                    <button class="touch-btn attack" id="btnAttack">A</button>
+                </div>
+            </div>
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="info-label">Time: 時間</span>
+                    <span id="timeDisplay" class="info-value">0:00</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">HP: 体力</span>
+                    <span id="hpDisplay" class="info-value">5</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Coins: コイン</span>
+                    <span id="coinDisplay" class="info-value">0 / 0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">ビームCD</span>
+                    <div id="beamBlocks" class="info-value" style="display:flex;gap:4px;align-items:center;">
+                        <!-- Blocks will be rendered here -->
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Seed: シード</span>
+                    <span id="seedDisplay" class="info-value">—</span>
+                </div>
+                <div class="info-item">
+                    <button id="hintBtn" class="menu-button" style="padding:6px 10px;">ヒント</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pre-Game Setup Screen -->
+        <div id="preGameScreen" class="screen">
+            <div class="screen-content">
+                <h2 class="screen-title">
+                    <span class="menu-label-en">GAME SETUP</span>
+                    <span class="menu-label-ja">ゲーム設定</span>
+                </h2>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Maze Difficulty</span>
+                        <span class="menu-label-ja">迷路難易度</span>
+                    </label>
+                    <select id="preGameDifficultySelect" class="settings-select">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Seed Value</span>
+                        <span class="menu-label-ja">シード値</span>
+                    </label>
+                    <input id="preGameSeedInput" type="number" class="settings-input" placeholder="Random (0-999999)" value="">
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Difficulty (1-1000)</span>
+                        <span class="menu-label-ja">難易度 (1〜1000)</span>
+                    </label>
+                    <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:400px;">
+                        <input id="preGameDifficultySlider" type="range" min="1" max="1000" value="500" style="flex:1;" />
+                        <span id="preGameDifficultyValue" style="width:48px;text-align:center;">500</span>
+                    </div>
+                </div>
+                    <div class="settings-group">
+                        <label class="settings-label">
+                            <span class="menu-label-en">Enemy Amount</span>
+                            <span class="menu-label-ja">敵の多さ</span>
+                        </label>
+                        <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:400px;">
+                            <input id="preGameEnemyAmountSlider" type="range" min="1" max="100" value="50" style="flex:1;" />
+                            <span id="preGameEnemyAmountValue" style="width:48px;text-align:center;">50</span>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <label class="settings-label">
+                            <span class="menu-label-en">Enemy Speed</span>
+                            <span class="menu-label-ja">敵の速さ</span>
+                        </label>
+                        <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:400px;">
+                            <input id="preGameEnemySpeedSlider" type="range" min="1" max="100" value="50" style="flex:1;" />
+                            <span id="preGameEnemySpeedValue" style="width:48px;text-align:center;">50</span>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                    </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Mob Strength (1-100)</span>
+                        <span class="menu-label-ja">敵の強さ (1〜100)</span>
+                    </label>
+                    <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:400px;">
+                        <input id="preGameMobStrengthSlider" type="range" min="1" max="100" value="50" style="flex:1;" />
+                        <span id="preGameMobStrengthValue" style="width:48px;text-align:center;">50</span>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Peaceful Mode</span>
+                        <span class="menu-label-ja">ピースフル（敵を出現させない）</span>
+                    </label>
+                    <input id="preGamePeacefulCheckbox" type="checkbox" class="settings-checkbox">
+                </div>
+                <nav class="menu">
+                    <button id="preGameStartBtn" class="menu-button">
+                        <span class="menu-label-en">START GAME</span>
+                        <span class="menu-label-ja">ゲーム開始</span>
+                    </button>
+                    <button id="preGameBackBtn" class="menu-button">
+                        <span class="menu-label-en">BACK</span>
+                        <span class="menu-label-ja">戻る</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen">
+            <div class="screen-content">
+                <h2 class="screen-title">
+                    <span class="menu-label-en">SETTINGS</span>
+                    <span class="menu-label-ja">設定</span>
+                </h2>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Sound</span>
+                        <span class="menu-label-ja">サウンド</span>
+                    </label>
+                    <input id="soundToggle" type="checkbox" class="settings-checkbox" checked>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Grid Display</span>
+                        <span class="menu-label-ja">グリッド表示</span>
+                    </label>
+                    <input id="gridToggle" type="checkbox" class="settings-checkbox" checked>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Beam Cooldown (ms)</span>
+                        <span class="menu-label-ja">ビーム クールダウン (ms)</span>
+                    </label>
+                    <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:400px;">
+                        <input id="beamCooldownSlider" type="range" min="100" max="2000" value="500" style="flex:1;" />
+                        <span id="beamCooldownValue" style="width:64px;text-align:center;">500</span>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Beam Penetration</span>
+                        <span class="menu-label-ja">ビーム貫通（複数敵を貫通）</span>
+                    </label>
+                    <input id="beamPenetrationCheckbox" type="checkbox" class="settings-checkbox">
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">
+                        <span class="menu-label-en">Hint HUD</span>
+                        <span class="menu-label-ja">ヒントをHUDに固定表示</span>
+                    </label>
+                    <input id="hintPersistentCheckbox" type="checkbox" class="settings-checkbox">
+                </div>
+                <nav class="menu">
+                    <button id="settingsBackBtn" class="menu-button">
+                        <span class="menu-label-en">BACK</span>
+                        <span class="menu-label-ja">戻る</span>
+                    </button>
+                    <button id="showControlsBtn" class="menu-button">
+                        <span class="menu-label-en">CONTROLS</span>
+                        <span class="menu-label-ja">操作方法</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- About Screen -->
+        <div id="aboutScreen" class="screen">
+            <div class="screen-content">
+                <h2 class="screen-title">
+                    <span class="menu-label-en">ABOUT</span>
+                    <span class="menu-label-ja">について</span>
+                </h2>
+                <div class="about-content">
+                    <p class="about-item">
+                        <span class="about-label">Author</span>
+                        <span class="about-label-ja">作者</span>
+                    </p>
+                    <p class="about-value">TANISHI</p>
+
+                    <p class="about-item">
+                        <span class="about-label">Version</span>
+                        <span class="about-label-ja">バージョン</span>
+                    </p>
+                    <p class="about-value">v1.2.9</p>
+
+                    <p class="about-item">
+                        <span class="about-label">Description</span>
+                        <span class="about-label-ja">説明</span>
+                    </p>
+                    <p class="about-value">
+                        A black-and-white minimal maze.Navigate a procedurally generated world with Arrow or WASD keys.
+                    </p>
+                    <p class="about-value-ja">
+                        黒と白だけで構成されたミニマル迷路。矢印キーまたはWASDで生成された世界を進もう。
+                    </p>
+                </div>
+                <nav class="menu">
+                    <button id="aboutBackBtn" class="menu-button">
+                        <span class="menu-label-en">BACK</span>
+                        <span class="menu-label-ja">戻る</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pauseMenu" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">
+                    <span class="menu-label-en">PAUSED</span>
+                    <span class="menu-label-ja">一時停止中</span>
+                </h2>
+                <nav class="menu">
+                    <button id="resumeBtn" class="menu-button">
+                        <span class="menu-label-en">RESUME</span>
+                        <span class="menu-label-ja">再開</span>
+                    </button>
+                    <button id="pauseBackBtn" class="menu-button">
+                        <span class="menu-label-en">BACK TO MENU</span>
+                        <span class="menu-label-ja">メニューに戻る</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Game Complete Screen -->
+        <div id="completeScreen" class="screen">
+            <div class="screen-content">
+                <h2 class="screen-title">
+                    <span class="menu-label-en">GAME CLEAR!</span>
+                    <span class="menu-label-ja">ゲームクリア！</span>
+                </h2>
+                <div class="complete-container">
+                    <div class="result-item">
+                        <span class="result-label">
+                            <span class="menu-label-en">Time</span>
+                            <span class="menu-label-ja">時間</span>
+                        </span>
+                        <span id="completeTime" class="result-value">0:00</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">
+                            <span class="menu-label-en">Coins Collected</span>
+                            <span class="menu-label-ja">集めたコイン</span>
+                        </span>
+                        <span id="completeCoinCount" class="result-value">0 / 0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">
+                            <span class="menu-label-en">Score</span>
+                            <span class="menu-label-ja">スコア</span>
+                        </span>
+                        <span id="completeScore" class="result-value">0</span>
+                    </div>
+                </div>
+                <nav class="menu">
+                    <button id="completeRestartBtn" class="menu-button">
+                        <span class="menu-label-en">RESTART</span>
+                        <span class="menu-label-ja">やり直す</span>
+                    </button>
+                    <button id="completeMenuBtn" class="menu-button">
+                        <span class="menu-label-en">BACK TO MENU</span>
+                        <span class="menu-label-ja">メニューに戻る</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Controls Instructions Modal (shown after pre-game unless disabled) -->
+        <div id="controlsModal" class="modal-overlay">
+            <div class="modal-content">
+                <h2 class="modal-title">
+                    <span class="menu-label-en">CONTROLS</span>
+                    <span class="menu-label-ja">操作方法</span>
+                </h2>
+                <div class="controls-body">
+                    <h3>基本操作</h3>
+                    <ul>
+                        <li>移動：矢印キー または <strong>W / A / S / D</strong></li>
+                        <li>攻撃（射撃）：<strong>Space</strong> キー（またはモバイルの <strong>A</strong> ボタン）</li>
+                        <li>近接攻撃：プレイヤーの隣接（上下左右）の敵に対して、スペースで近接ダメージを与えられます。</li>
+                    </ul>
+                    <h3>射撃の向き（ビーム）</h3>
+                    <p>射撃は次の優先順で方向が決まります：現在押している方向キー → プレイヤーの向き（最後に移動した方向）→ 最後に入力した移動方向。つまり、狙いたい方向のキーを押しながら <strong>Space</strong> を押すとその方向にビームが飛びます。</p>
+                    <h3>ビーム仕様</h3>
+                    <ul>
+                        <li>ビームは黒い壁に当たると消えます。</li>
+                        <li>設定の「ビーム貫通」をオンにすると複数の敵を貫通して倒せます。</li>
+                        <li>設定の「ビーム クールダウン」で連射速度を調整できます。</li>
+                    </ul>
+                    <h3>ヒント（コンパス）</h3>
+                    <p>ゲーム中の「ヒント」ボタンを押すと、画面下部にコンパスが表示され矢印がゴールの方向を指します。設定から「ヒントをHUDに固定表示」を有効にすると常時表示されます。</p>
+                    <h3>その他</h3>
+                    <ul>
+                        <li>ピースフル：プリゲームで「ピースフル」をオンにすると敵が出現しません。</li>
+                        <li>目的：迷路内のコインを集め、ダイヤモンドブロック（ゴール）へ到達してください。</li>
+                    </ul>
+                    <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="hideControlsCheckbox">
+                        <label for="hideControlsCheckbox">次回から表示しない</label>
+                    </div>
+                </div>
+                <nav class="menu" style="margin-top:14px;">
+                    <button id="controlsPlayBtn" class="menu-button">
+                        <span class="menu-label-en">PLAY</span>
+                        <span class="menu-label-ja">プレイ</span>
+                    </button>
+                    <button id="controlsBackBtn" class="menu-button">
+                        <span class="menu-label-en">BACK</span>
+                        <span class="menu-label-ja">戻る</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="settings.js"></script>
+    <script src="maze.js"></script>
+    <script src="render.js"></script>
+    <script src="input.js"></script>
+    <script src="gui.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
