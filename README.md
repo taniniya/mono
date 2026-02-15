@@ -1,6 +1,3 @@
-# mono
-maze-geme
-
 # MONO MAZE  
 Escape the Infinite Maze
 
